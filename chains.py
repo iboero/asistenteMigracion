@@ -32,7 +32,7 @@ load_dotenv(dotenv_path=dotenv_path)
 client = Client()
 
 unique_id = uuid4().hex[0:8]
-os.environ["LANGCHAIN_PROJECT"] = f"Migracion - {unique_id}"
+os.environ["LANGCHAIN_PROJECT"] = 'Asistente Migracion'#f"Migracion - {unique_id}"
 
 
 ## LEVANTAR BASE DE DATOS Y LLM
