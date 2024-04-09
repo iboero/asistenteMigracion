@@ -113,7 +113,7 @@ def handle_new_chat():
     global chat_history
     chat_history = [("system", "Given the following question-answer sequence in spanish, rewrite the LAST question in a standalone format. That mean, in a way that the standalone question can be fully understood without the question/answer history. Rewrite it in spanish, not english. In case there is only one question, leave the question as is. DO NOT TRY TO ANSWER THE QUESTION, JUST REWRITE IT'S STANDALONE VERSION")]
     return jsonify({'status': 'new chat started'})  # Respuesta opcional
-
+# hola
 
 ## Cambiar Sistema
 @app.route('/update_option', methods=['POST'])
