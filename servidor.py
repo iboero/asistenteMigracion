@@ -146,6 +146,9 @@ def update_historial():
     print("historial actualizado a:", historial)
     return jsonify({'status': 'success'})
 
+@app.route('/health')
+def health_check():
+    return 'OK', 200
 
 ## Manejar Feedback
 @app.route('/feedback', methods=['POST'])
@@ -168,6 +171,6 @@ def feedback():
 
 # CORRER SERVIDOR
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8000)
 
 
