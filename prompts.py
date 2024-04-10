@@ -37,13 +37,13 @@ And the "registros" of interest are:
 
 The user asks which "registro" is the most appropriate for storing the following information:  {pregunta}                   
 
-Answer IN SPANISH whether one or more of the registers is appropriate to store that information.  In case none of the  "registro" seem appropriate to store the information, answer honestly and politely IN SPANISH that it was not possible to find a  "registro" that stores that information.
+Answer IN SPANISH which register/s is/are appropriate to store that information.  In case none of the registers seems appropriate to store the information, answer honestly and politely IN SPANISH that it was not possible to find a register appropiate for that information.
 
-In case one or more "registro" are found appropriate, as part of the answer explain what information is stored in each "registro" and in the "bandeja" to which the "registro" belongs. Also explain what the "registro" type is.
+In case one or more registers are found possible, explain what information is stored in each register and in the "bandeja" to which the register belongs. Also explain the register type
 """, input_variables=["pregunta","campos","desc_bandejas"])
 
 # PROMPT PARA ELEGIR REGISTRO ESP
-prompt_campos = PromptTemplate(template=""" 
+prompt_campos_esp = PromptTemplate(template=""" 
 Sos un asistente de chat para el sistema de migración de Bantotal.
 Se presenta una breve introducción sobre el sistema de migración:
 
@@ -84,13 +84,16 @@ UNICAMENTE en caso que ninguno de los registros parezca adecuado para guardar la
 
 ## PROMPT PARA HACER RAG CON CONTENIDO
 prompt_rag = PromptTemplate(template=""" 
-Sos un asistente en el sistema de migración de Bantotal. 
-Dado el siguiente contenido, responder a la pregunta. Responder de forma amplia, ahondando en la mayor cantidad de detalles, pero SIN INVENTAR INFORMACIÓN. Toda la información debe ser recuperada del contenido. 
-<contenido>
-{contenido}
-</contenido>
+You are an asistant, expert on the migrations sistem of Bantotal. Your task is to answer the user question. You must always answer in SPANISH.
+The following content was retrieved using semantic search given the question, therefore, some parts may be relevants while others may not. 
+Answer in a comprehensive manner, delving into as much detail as possible. But DO NOT MAKE UP INFORMATION. ALL information in your answer must be part of the retrieved content.
+In case the question can't be answer directly from the content, honestly and politely say that you are unable to answer the question.
 
-pregunta: {pregunta}
+<retrieved content>
+{contenido}
+</retrieved content>
+
+question: {pregunta}
 
 """, input_variables=["pregunta", "secciones"])
 

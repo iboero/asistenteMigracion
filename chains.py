@@ -36,10 +36,33 @@ os.environ["LANGCHAIN_PROJECT"] = 'Asistente Migracion'#f"Migracion - {unique_id
 
 
 ## LEVANTAR BASE DE DATOS Y LLM
-db_ret = Chroma(persist_directory="data/db_campos", embedding_function=OpenAIEmbeddings())
+
 filename = 'data/dict_arbol_secciones.pkl'
 with open(filename, 'rb') as file:
     trees = pkl.load(file)
+
+
+
+filename = 'data/manuales_object.pkl'
+with open(filename, 'rb') as file:
+    manuales_obj = pkl.load(file)
+
+db_ret = Chroma(persist_directory="data/db_campos", embedding_function=OpenAIEmbeddings())
+
+
+crear_db = False
+
+if crear_db:
+    db_ret.delete_collection()
+    d = []
+    for m_name in manuales_obj:
+        m = manuales_obj[m_name]
+        for b in m.bandejas:
+            for c in b.campos:
+                d.append(docs(page_content=c.descripcion, metadata={"manual":m.codigo,"bandeja":b.codigo, "campo":c.codigo,"tipo":c.tipo}))
+    embedding_function = OpenAIEmbeddings()
+    db_ret = Chroma.from_documents(d, embedding_function, persist_directory="data/db_campos")
+
 
 llm = ChatOpenAI(temperature=0)
 #llm = ChatAnthropic(model_name="claude-3-haiku-20240307",temperature=0)
@@ -61,9 +84,6 @@ def parse_campos(i_dict):
 prompt_campos = p.prompt_campos
 
 
-filename = 'data/manuales_object.pkl'
-with open(filename, 'rb') as file:
-    manuales_obj = pkl.load(file)
 
 def get_desc_bandejas(manual):
     manual = manuales_obj[manual]

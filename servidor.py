@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 
 import csv
+import os
 from chains import chain_campo, chain_get_answer
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.prompts import PromptTemplate
@@ -171,6 +172,7 @@ def feedback():
 
 # CORRER SERVIDOR
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
 
 
