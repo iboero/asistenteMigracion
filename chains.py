@@ -50,7 +50,7 @@ with open(filename, 'rb') as file:
 db_ret = Chroma(persist_directory="data/db_campos", embedding_function=OpenAIEmbeddings())
 
 
-crear_db = False
+crear_db = True
 
 if crear_db:
     db_ret.delete_collection()
