@@ -10,6 +10,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain.docstore.document import Document as docs
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import AzureChatOpenAI
 
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain.prompts import PromptTemplate
@@ -64,8 +65,12 @@ if crear_db:
     db_ret = Chroma.from_documents(d, embedding_function, persist_directory="data/db_campos")
 
 
-llm = ChatOpenAI(temperature=0)
+llm = AzureChatOpenAI(
+    deployment_name="gpt-35-turbo-16k",
+    temperature=0.0
+)
 #llm = ChatAnthropic(model_name="claude-3-haiku-20240307",temperature=0)
+#llm = ChatOpenAI(temperature=0)
 
 
 ## CHAIN PARA CAMPOS
