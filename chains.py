@@ -11,6 +11,7 @@ from langchain.docstore.document import Document as docs
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureOpenAIEmbeddings
 
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain.prompts import PromptTemplate
@@ -48,7 +49,9 @@ filename = 'data/manuales_object.pkl'
 with open(filename, 'rb') as file:
     manuales_obj = pkl.load(file)
 
-db_ret = Chroma(persist_directory="data/db_campos", embedding_function=OpenAIEmbeddings())
+embeddings = AzureOpenAIEmbeddings(model="text-embedding-ada-002")
+
+db_ret = Chroma(persist_directory="data/db_campos", embedding_function=embeddings)
 
 
 crear_db = True
@@ -61,7 +64,7 @@ if crear_db:
         for b in m.bandejas:
             for c in b.campos:
                 d.append(docs(page_content=c.descripcion, metadata={"manual":m.codigo,"bandeja":b.codigo, "campo":c.codigo,"tipo":c.tipo}))
-    embedding_function = OpenAIEmbeddings()
+    embedding_function = embeddings
     db_ret = Chroma.from_documents(d, embedding_function, persist_directory="data/db_campos")
 
 
