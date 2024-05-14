@@ -88,7 +88,7 @@ endpoint = os.getenv("AZURE_AI_SEARCH_SERVICE_NAME")
 sc = SearchClient(endpoint=endpoint, index_name=index_name, credential=credential)
 sc_campo = SearchClient(endpoint=endpoint, index_name=index_name_2, credential=credential)
 
-with open("C:/Users/iboero/asistentes/asistente_migracion/asistente_migracion_v2/data/manuales_object.pkl", 'rb') as f:
+with open("./data/manuales_object.pkl", 'rb') as f:
     manulales = dill.load(f)
 
 # DEFINIR TOOLS

@@ -129,20 +129,6 @@
             cursor: pointer;
             }
 
-        /* .feedback-button-neg {
-            cursor: pointer;
-            padding: 5px;
-            position: relative; 
-            float: right; 
-            margin-right: 10px; /* Espacio entre los botones 
-        }
-        .feedback-button-pos {
-            cursor: pointer;
-            padding: 5px;
-            position: relative;
-            float: right; 
-            margin-right: 10px; /* Espacio entre los botones 
-        } */
         .feedback-buttons-container {
             position: relative; 
             float: right;
@@ -190,52 +176,18 @@
     </style>
 </head>
 <body>
-    <!-- <div id="menu">
-        <div id="menuTitle"><span style="color: red;">&gt;</span>Opciones</div>
-        <hr>
-        <div class="menuSection">
-            <select id="sistemasSelect">
-                <option value="Todos">Todos</option>
-                <option data-value="AhorroProgramado">Ahorro Programado</option>
-                <option data-value="CadenadeCierre">Cadena de Cierre</option>
-                <option data-value="Calendarios">Calendarios</option>
-                <option data-value="CASHManagement">CASH Management</option>
-                <option data-value="Clientes">Clientes</option>
-                <option data-value="ConfiguracionBantotal">Configuracion Bantotal</option>
-                <option data-value="Contabilidad">Contabilidad</option>
-                <option data-value="CuentasCorrientes">Cuentas Corrientes</option>
-                <option data-value="CuentasdeAhorro">Cuentas de Ahorro</option>
-                <option data-value="CuentasVista">Cuentas Vista</option>
-                <option data-value="DepositosaPlazo">Depositos a Plazo</option>
-                <option data-value="DescuentodeDocumentos">Descuento de Documentos</option>
-                <option data-value="Indicadores">Indicadores</option>
-                <option data-value="Microfinanzas">Microfinanzas</option>
-                <option data-value="ModeladordePrestamos">Modelador de Prestamos</option>
-                <option data-value="PAE">PAE</option>
-                <option data-value="ParametrosBase">Parametros Base</option>
-                <option data-value="Personas">Personas</option>
-                <option data-value="Precios">Precios</option>
-                <option data-value="Prestamos">Prestamos</option>
-                <option data-value="ReglasdeNegocio">Reglas de Negocio</option>
-                <option data-value="Seguridad">Seguridad</option>
-                <option data-value="TarjetasdeDebito">Tarjetas de Debito</option>
-                <option data-value="Usuarios">Usuarios</option>
-                <option data-value="Workflow">Workflow</option>
-            </select>
-        </div>
-        <hr>
-    </div> -->
     <div id="content">
         <div class="header">
             <button id="newChatButton">+</button>
             <h2>Asistente <span class="red">&gt;</span>Bantotal</h2>
+            <div style="margin-left: auto;">
+                <select id="versionSelect" onchange="selectVersion()">
+                    <option value="1">v1</option>
+                </select>
+            </div>
         </div>
         <div id="chat"></div>
         <div id="message-container">
-            <!-- <div id="default-questions">
-                <button class="pregunta-btn" onclick="presetQuestion('¿Que es el proceso de migracion?')">¿Que es el proceso de migracion?</button>
-                <button class="pregunta-btn" onclick="presetQuestion('¿Como agrego una nueva bandeja?')">¿Como agrego una nueva bandeja?</button>
-            </div> -->
             <textarea id="message" rows="1" autofocus oninput="adjustHeight()" placeholder="Escribe tu pregunta..."></textarea>
             <div id="sendButton" onclick="sendMessage()">
                 <i id="sendIcon" class="sendIcon"></i>
@@ -244,60 +196,7 @@
     </div>
     <script>
         let awaitingResponse = false;
-        // let preguntasPorOpcion = {
-        //     "Proceso de Migracion": [
-        //         "¿Que es el proceso de migracion?", 
-        //         "¿Como agrego una nueva bandeja?"
-        //     ],
-        //     "Saldos Iniciales": [
-        //         "¿Qué bandejas tiene Saldos Iniciales?", 
-        //         "¿Qué migraciones previa requiere Saldos Iniciales?"
-        //     ],
-        //     "Cuentas y Personas": [
-        //         "¿Qué bandejas tiene Cuentas y Personas?", 
-        //         "¿Qué migraciones previa requiere Cuentas y Personas?"
-        //     ],
-        //     "Cuentas Vistas": [
-        //         "¿Qué bandejas tiene Cuentas Vistas?", 
-        //         "¿Qué migraciones previa requiere Cuentas Vistas?"
-        //     ],
-        //     "Chequeras": [
-        //         "¿Qué bandejas tiene Chequeras?", 
-        //         "¿Qué migraciones previa requiere Chequeras?"
-        //     ],
-        //     "Depósitos": [
-        //         "¿Qué bandejas tiene Depósitos?", 
-        //         "¿Qué migraciones previa requiere Depósitos?"
-        //     ],
-        //     "Líneas de Crédito": [
-        //         "¿Qué bandejas tiene Líneas de Crédito?", 
-        //         "¿Qué migraciones previa requiere Líneas de Crédito?"
-        //     ],
-        //     "Microfinanzas": [
-        //         "¿Qué bandejas tiene Microfinanzas?", 
-        //         "¿Qué migraciones previa requiere Microfinanzas?"
-        //     ],
-        //     "Tarjetas de Débito": [
-        //         "¿Qué bandejas tiene Tarjetas de Débito?", 
-        //         "¿Qué migraciones previa requiere Tarjetas de Débito?"
-        //     ],
-        //     "Garantías": [
-        //         "¿Qué bandejas tiene Garantías?", 
-        //         "¿Qué migraciones previa requiere Garantías?"
-        //     ],
-        //     "Descuentos": [
-        //         "¿Qué bandejas tiene Descuentos?", 
-        //         "¿Qué migraciones previa requiere Descuentos?"
-        //     ],
-        //     "Préstamos": [
-        //         "¿Qué bandejas tiene Préstamos?", 
-        //         "¿Qué migraciones previa requiere Préstamos?"
-        //     ],
-        //     "Acuerdos de Sobregiro": [
-        //         "¿Qué bandejas tiene Acuerdos de Sobregiro?", 
-        //         "¿Qué migraciones previa requiere Acuerdos de Sobregiro?"
-        //     ]
-        // };
+
         document.getElementById('newChatButton').addEventListener('click', function() {
             fetch('/new_chat', {
                 method: 'POST',
@@ -315,63 +214,7 @@
             .catch(error => console.error('Error al iniciar un nuevo chat:', error));
         });
 
-       
-
-        // document.getElementById('sistemasSelect').addEventListener('change', function() {
-        //     const selectedOption = this.value;
-        //     console.log("Opción seleccionada:", selectedOption); // Para propósitos de depuración
-        //     // actualizarPreguntasPredefinidas(preguntasPorOpcion[selectedOption]);
-        //     fetch('/update_option', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({option: selectedOption, tabId: tabId}),
-        //     });
-        // });
-
-        // let isCampo = false; // Estado inicial para "Buscar Campo"
-        // let isHistorial = false; // Estado inicial para "Historial de Chat"
-
-        // document.getElementById('toggleCampo').addEventListener('click', function() {
-        //     isCampo = !isCampo;
-        //     this.classList.toggle('active', isCampo);
-        //     document.querySelector('#toggleCampo .toggleButton').classList.toggle('active', isCampo);
-
-        //     document.getElementById('message').placeholder = isCampo ? "En que registro se guarda información sobre... " : "Escribe tu pregunta...";
-
-        //     togglePreguntasPredefinidas(isCampo);
-
-        //     // Enviar al servidor 0 para no activado, 1 para activado
-        //     fetch('/update_campo', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({toggle: isCampo ? 1 : 0}),
-        //     });
-        // });
-
-        // function togglePreguntasPredefinidas(ocultar) {
-        //     const contenedorPreguntas = document.getElementById('default-questions');
-        //     contenedorPreguntas.style.display = ocultar ? 'none' : '';
-        // }
-
-        // document.getElementById('toggleHistorial').addEventListener('click', function() {
-        //     isHistorial = !isHistorial;
-        //     this.classList.toggle('active', isHistorial);
-        //     document.querySelector('#toggleHistorial .toggleButton').classList.toggle('active', isHistorial);
-
-        //     // Enviar al servidor 0 para no activado, 1 para activado
-        //     fetch('/update_historial', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({toggle: isHistorial ? 1 : 0}),
-        //     });
-        // });
-        
+ 
         function adjustHeight() {
             var message = document.getElementById('message');
             var scrollPosition = window.scrollY;
@@ -379,27 +222,6 @@
             message.style.height = (message.scrollHeight+10)+ 'px';
         }
 
-        // function actualizarPreguntasPredefinidas(preguntas) {
-        //     const contenedorPreguntas = document.getElementById('default-questions');
-        //     // Limpia el contenedor de preguntas
-        //     contenedorPreguntas.innerHTML = '';
-
-        //     // Genera nuevos botones para cada pregunta
-        //     preguntas.forEach(pregunta => {
-        //         const boton = document.createElement('button');
-        //         boton.classList.add('pregunta-btn');
-        //         boton.textContent = pregunta;
-        //         boton.onclick = function() { presetQuestion(pregunta); };
-        //         contenedorPreguntas.appendChild(boton);
-        //     });
-
-        //     togglePreguntasPredefinidas(isCampo);
-        // }
-
-        // function presetQuestion(question) {
-        //     document.getElementById('message').value = question; // Establece la pregunta en el campo de mensaje
-        //     sendMessage(); // Llama a la función que ya tienes para enviar mensajes
-        // }
         let tabId = sessionStorage.getItem('tabId');
         if (!tabId) {
             tabId = Date.now().toString() + Math.random().toString();
@@ -557,6 +379,22 @@
             });
 
             feedbackBox.focus();
+        }  
+
+        // Implementar selectVersion function
+        function selectVersion() {
+            var selectElement = document.getElementById('versionSelect');
+            var selectedVersion = selectElement.options[selectElement.selectedIndex].value;
+            fetch('/select_version', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({version: selectedVersion, tabId: tabId}),
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
         }
 
 
@@ -583,19 +421,11 @@
 
         window.onload = adjustHeight;
         document.addEventListener('DOMContentLoaded', (event) => {
-            // Obtiene el elemento select
-            // const selectElement = document.getElementById('sistemasSelect');
 
-            // Establece el valor del select al primer elemento de la lista si necesitas especificar uno
-            // Nota: Por defecto, el primer elemento ya estará seleccionado, pero si necesitas simular
-            // un cambio para cargar contenido relacionado o realizar otras acciones, puedes hacerlo así:
-            // selectElement.value = "Todos"; // Opcional, si necesitas seleccionar un valor específico
-
-            // Crea y dispara el evento de cambio para el select
             const eventChange = new Event('change');
             selectElement.dispatchEvent(eventChange);
         });
-
+        selectVersion();
     </script>
 </body>
 </html>

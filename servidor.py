@@ -36,6 +36,7 @@ templates = Jinja2Templates(directory="templates")
 ultima_respuesta = {}
 ultima_pregunta = {}
 chat_histories = {}
+versions = {}
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -92,12 +93,15 @@ def stream(request: Request):
     return StreamingResponse(generate_data(ultima_pregunta[tab_id], tab_id), media_type='text/event-stream')
 
 
-@app.post("/update_option")
-async def update_option(request: Request):
+@app.post("/select_version")
+async def select_version(request: Request):
     data = await request.json()
-    selected_option = data['option']
-    print("Opción actualizada a:", selected_option)
+    select_version = data['version']
+    global versions
+    versions[data['tabId']] = select_version
+    print("Versión actualizada a:", select_version)
     return JSONResponse(content={'status': 'success'})
+
 
 
 @app.post("/new_chat")
