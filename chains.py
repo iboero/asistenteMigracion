@@ -32,6 +32,27 @@ from langchain_community.vectorstores.azure_cosmos_db import AzureCosmosDBVector
 
 import tiktoken
 
+from azure.search.documents.models import VectorFilterMode
+from azure.search.documents.models import VectorizedQuery
+from azure.search.documents.models import QueryType, QueryCaptionType, QueryAnswerType
+from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import (
+    SimpleField,
+    SearchFieldDataType,
+    SearchableField,
+    SearchField,
+    VectorSearch,
+    HnswAlgorithmConfiguration,
+    VectorSearchProfile,
+    SemanticConfiguration,
+    SemanticPrioritizedFields,
+    SemanticField,
+    SemanticSearch,
+    SearchIndex
+)
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents import SearchClient
+
 ## INICIAR LANGSMITH Y API KEYS
 dotenv_path = here() / ".env"
 load_dotenv(dotenv_path=dotenv_path)
@@ -56,143 +77,22 @@ encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
 embeddings = AzureOpenAIEmbeddings(model="text-embedding-ada-002")
 
-db = Chroma(persist_directory="C:/Users/iboero/asistentes/generacion_datos/procesamiento_manuales/manuales_database",embedding_function=embeddings)
-db_campo = Chroma(persist_directory="C:/Users/iboero/asistentes/asistente_migracion/asistente_migracion_v1/data/db_campos", embedding_function=embeddings)
+
+index_name = "migracion_secciones_manuales"
+index_name_2 = "migracion_campos"
+
+credential = AzureKeyCredential(os.getenv("AZURE_AI_SEARCH_API_KEY"))
+endpoint = os.getenv("AZURE_AI_SEARCH_SERVICE_NAME")
 
 
-with open("C:/Users/iboero/asistentes/asistente_migracion/asistente_migracion_v1/data/manuales_object.pkl", 'rb') as f:
+sc = SearchClient(endpoint=endpoint, index_name=index_name, credential=credential)
+sc_campo = SearchClient(endpoint=endpoint, index_name=index_name_2, credential=credential)
+
+with open("C:/Users/iboero/asistentes/asistente_migracion/asistente_migracion_v2/data/manuales_object.pkl", 'rb') as f:
     manulales = dill.load(f)
 
 # DEFINIR TOOLS
 
-
-
-## CREAR TOOLS DE MANUALS
-
-
-
-# class manual_search_args(BaseModel):
-#     question: str = Field(description="Question to answer from the manual in SPANISH")
-
-
-# prompt_elegir_secciones = ChatPromptTemplate.from_messages([
-#     ("system", """
-# Task: Given the index and question below, identify which sections/subsections of the index are relevant to answer the question.
-
-# Instructions:
-#     1) Select relevant sections or subsections based on the question's context. If a section or subsection is selected, do not separately select any of its child subsections, as they are included.
-#     2) Limit your selection to a maximum of 5 sections or subsections. There is no minimum requirement.
-#     3) Output your answer as a JSON blob with two keys:
-#        - "sections_name": a list containing the names of the relevant sections/subsections
-#        - "sections_number": a list containing the numbers of the relevant sections/subsections, formatted as STRINGS
-
-# Example Input:
-# Index:
-#     1. Installation
-#         1.1 Prerequisites
-#         1.2 Setup Instructions
-#     2. Configuration
-#         2.1 Modify Config Files
-#         2.2 Verify Installation
-#         2.2.1 System Check
-# Question: "What sections detail the initial installation steps?"
-
-# Example Output:
-# {{
-#     "sections_name": ["Installation"],
-#     "sections_number": ["1"]
-# }}
-
-# Index:
-# {index}
-
-# Question: {question}
-# """)])
-
-
-
-
-# def filter_sections(sections):
-#     # Sort sections to ensure parents come before their children
-#     sections_sorted = sorted(sections, key=lambda x: list(map(int, x.split('.'))))
-    
-#     filtered_sections = []
-    
-#     # Loop through each section
-#     for section in sections_sorted:
-#         # Generate all possible parent sections
-#         parts = section.split('.')
-#         possible_parents = ['.'.join(parts[:i]) for i in range(1, len(parts))]
-        
-#         # Check if any possible parent is in the filtered sections
-#         if not any(parent in filtered_sections for parent in possible_parents):
-#             filtered_sections.append(section)
-
-#     return filtered_sections
-
-
-# def create_manual_tool(description, manual_pkl,args_schema):
-#     def decorator(func):
-#         func.__doc__ = description
-#         return tool("retrieve_information_from_" + manual_pkl.title.replace(" ", "_").lower(), args_schema=args_schema)(func)
-
-#     @decorator
-#     def retrieve_information(question:str):
-#         # Elijo el manual específico
-#         selected_manual = manual_pkl
-#         indice = selected_manual.get_index()
-#         chain = prompt_elegir_secciones | ChatOpenAI(model="gpt-3.5-turbo",temperature=0.0) | JsonOutputParser()
-#         secc = chain.invoke({"index":indice, "question":question})
-#         filtered_sections = filter_sections(secc["sections_number"])
-        
-#         # Recupero el contenido de las secciones
-#         content = ""
-#         for sec in filtered_sections:
-#             content += selected_manual.get_section(sec) + '\n\n'
-#         return content
-
-#     return retrieve_information
-
-
-
-# def class_from_section(sections: List[Tuple[int, str]]) -> Type[BaseModel]:
-#     level_1_sections = {name.replace(' ', '_').lower(): (bool, Field(default=False,description=f"Set True to return the content of section '{name}'. Else set to False"))
-#                         for level, name in sections if level == 1}
-#     class_dict = {}
-#     for name in level_1_sections.keys():
-#          field = (bool, Field(description=f"Requiered field. Set True to return the content of section '{name}'. Else set to False"))
-#          class_dict[name] = field
-#     ManualSections = create_model('ManualSections', **class_dict)    
-#     return ManualSections
-
-
-
-# def create_manual_tool_2(description, manual_pkl,args_schema):
-#     def decorator(func):
-#         func.__doc__ = description
-#         return tool("retrieve_information_from_" + manual_pkl.title.replace(" ", "_").lower(), args_schema=args_schema)(func)
-
-#     @decorator
-#     def retrieve_information(**args_schema):
-#         # Elijo el manual específico
-#         selected_manual = manual_pkl
-#         sections = []
-#         total_tokens = 0
-#         for idx, ret_sec in enumerate(args_schema.values()):
-#             if ret_sec:
-#                 sections.append(str(idx+1))
-#         # Recupero el contenido de las secciones
-#         content = ""
-#         for sec in sections:
-#             ret_sec = selected_manual.get_section(sec) + '\n\n'
-#             tokens = len(encoding.encode(ret_sec))
-#             if total_tokens + tokens < 13000:
-#                 content += ret_sec
-#                 total_tokens += tokens
-#         return content
-
-#     return retrieve_information
-# # Example of creating a tool for a specific manual
 
 def remover_tildes(input_str):
     # Normalizar la cadena de texto a 'NFD' para descomponer los acentos
@@ -209,25 +109,34 @@ class desc_campo(BaseModel):
 @tool("retrieve_fields_from_description",args_schema=desc_campo)
 def retrieve_fields_from_description(information:str, system:str="all"):
     """Retrieves probable fields suitable to store the information."""
-    if system in ['Cuentas Vistas', 'Cuentas y Personas', 'Chequeras', 'Depósitos', 'Microfinanzas', 'Saldos Iniciales', 'Facultades', 'Líneas de Crédito','Garantías', 'Préstamos', 'Acuerdos de Sobregiro', 'Tarjetas de Débito', 'Descuentos']:
-        filt = {"manual":"Manual " + system}
+    embedding = embeddings.embed_query(information)
+    vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=20, fields="content_vector", exhaustive=True)
+
+    if system != "all":
+        filter=f"manual eq 'Manual {system}'"
     else:
-        filt = {}
-    campos =  db_campo.similarity_search(information,k=len(db_campo.get()["ids"]), filter=filt)[:10]
+        filter=None
+
+    results = sc_campo.search(  
+        # search_text=query,  
+        vector_queries= [vector_query],
+        filter=filter,
+        select=["content","manual", "campo", "bandeja", "tipo"],
+    )
+
     string = ""
     bdjs = []
-    for c in campos:
-        md = c.metadata
-        string += f'{{ "field": "{md["campo"]}", "description": "{c.page_content}",  "tray": "{md["bandeja"]}", "type": "{md["tipo"]}", "sistem": {md["manual"].replace("Manual ", "")} }} \n\n'
+    for md in results:
+        string += f'{{ "field": "{md["campo"]}", "description": "{md["content"]}",  "tray": "{md["bandeja"]}", "type": "{md["tipo"]}", "sistem": {md["manual"].replace("Manual ", "")} }} \n\n'
         # si md bandeja no esta en bdjs la agrego
         if md["bandeja"] not in bdjs:
             bdjs.append(md["bandeja"])
-    string += f"\n\n Tray info: \n"
+    tray_string = f"Trays: \n"
     for manual in manulales:
         for bandeja in manulales[manual].bandejas:
             if bandeja.codigo in bdjs:
-                string += f'{{ "tray": "{bandeja.codigo}", "description": "{bandeja.descripcion}", "system": "{manual.replace("Manual ", "")}" }} \n\n'
-    return string
+                tray_string += f'{{ "tray": "{bandeja.codigo}", "description": "{bandeja.descripcion}", "system": "{manual.replace("Manual ", "")}" }} \n\n'
+    return tray_string + "\n\n Suitable Fields: \n"+string
 
 
 class retriever_input(BaseModel):
@@ -242,8 +151,22 @@ def create_manual_tool(description, manual_pkl):
 
     @decorator
     def retrieve_information(question:str, keywords:List[str] = []):
+
+
+        # Pure Vector Search
+        embedding = embeddings.embed_query(question)
+        vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=4, fields="content_vector", exhaustive=True)
+
+        results = sc.search(  
+            # search_text=query,  
+            vector_queries= [vector_query],
+            filter=f"manual eq '{manual_pkl.title}'",
+            select=["seccion", "tokens"],
+        )
+        retrieved_secs = []
+        for r in results:
+            retrieved_secs.append(r["seccion"])
         total_token = 0
-        retrieved_secs = [x.metadata["section"] for x in db.similarity_search(question, filter={"title":manual_pkl.title})]
         sec_kw = []
         for c in manual_pkl.contents.values():
             kw = "BNJ040"
