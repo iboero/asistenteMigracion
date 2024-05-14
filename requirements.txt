@@ -9,4 +9,9 @@ pyprojroot
 flask
 python-dotenv
 chromadb==0.3.29
-python-docx 
+fastapi
+uvicorn
+pymongo
+azure-search
+azure-search-documents
+azure-identity
