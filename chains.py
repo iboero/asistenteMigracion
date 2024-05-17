@@ -91,6 +91,13 @@ sc_campo = SearchClient(endpoint=endpoint, index_name=index_name_2, credential=c
 with open("./data/manuales_object.pkl", 'rb') as f:
     manulales = dill.load(f)
 
+for m in manuales:
+    if m.title == "Manual Proceso de Migracion":
+        manual_general = m
+
+
+with open('bandejas.dill', 'rb') as file:
+    bandejas = dill.load(file)
 # DEFINIR TOOLS
 
 
@@ -101,14 +108,15 @@ def remover_tildes(input_str):
     return ''.join(c for c in normalized_str if unicodedata.category(c) != 'Mn')
 
 
+## FIELDS TOOL
 
 class desc_campo(BaseModel):
     information: str = Field(description="Information that wants to be stored in a field.")
     system = str = Field(description="Filter the search to a particular system. The possible systems are: ['Cuentas Vistas', 'Cuentas y Personas', 'Chequeras', 'Depósitos', 'Microfinanzas', 'Saldos Iniciales', 'Facultades', 'Líneas de Crédito','Garantías', 'Préstamos', 'Acuerdos de Sobregiro', 'Tarjetas de Débito', 'Descuentos', 'all']", default="all")
 
-@tool("retrieve_fields_from_description",args_schema=desc_campo)
-def retrieve_fields_from_description(information:str, system:str="all"):
-    """Retrieves probable fields suitable to store the information."""
+@tool("retrieve_records_from_description",args_schema=desc_campo)
+def retrieve_records_from_description(information:str, system:str="all"):
+    """Migrating to Bantotal requieres the user to fill in a lot of information. This tool helps you find the records that are somehow related to the information you have."""
     embedding = embeddings.embed_query(information)
     vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=20, fields="content_vector", exhaustive=True)
 
@@ -127,7 +135,7 @@ def retrieve_fields_from_description(information:str, system:str="all"):
     string = ""
     bdjs = []
     for md in results:
-        string += f'{{ "field": "{md["campo"]}", "description": "{md["content"]}",  "tray": "{md["bandeja"]}", "type": "{md["tipo"]}", "sistem": {md["manual"].replace("Manual ", "")} }} \n\n'
+        string += f'{{ "Campo": "{md["campo"]}", "Descripción": "{md["content"]}",  "Bandeja/Tabla": "{md["bandeja"]}", "Tipo": "{md["tipo"]}", "Sistema": {md["manual"].replace("Manual ", "")} }} \n\n'
         # si md bandeja no esta en bdjs la agrego
         if md["bandeja"] not in bdjs:
             bdjs.append(md["bandeja"])
@@ -135,69 +143,123 @@ def retrieve_fields_from_description(information:str, system:str="all"):
     for manual in manulales:
         for bandeja in manulales[manual].bandejas:
             if bandeja.codigo in bdjs:
-                tray_string += f'{{ "tray": "{bandeja.codigo}", "description": "{bandeja.descripcion}", "system": "{manual.replace("Manual ", "")}" }} \n\n'
+                tray_string += f'{{ "Bandeja/Tabla": "{bandeja.codigo}", "Descripción": "{bandeja.descripcion}", "Sistema": "{manual.replace("Manual ", "")}" }} \n\n'
     return tray_string + "\n\n Suitable Fields: \n"+string
 
 
-class retriever_input(BaseModel):
-    question: str = Field(description="Question to answer from the manual, in spanish")
-    keywords: List[str] = Field(description="Keywords to directly look for in the contents. Must be a particular element to search for (tray, field, etc)", default=[])
+
+# SISTEM TOOL
+class system_retriever_input(BaseModel):
+    system: str = Field(description="System to retrieve information from. The possible systems are: ['Cuentas Vistas', 'Cuentas y Personas', 'Chequeras', 'Depósitos', 'Microfinanzas', 'Saldos Iniciales', 'Facultades', 'Líneas de Crédito','Garantías', 'Préstamos', 'Acuerdos de Sobregiro', 'Tarjetas de Débito', 'Descuentos']")
+    # retrieve_sec_1: bool = Field(description="Retrieve outline of this particular sistem migration proccess", default=False)
+    # retrieve_sec_2: bool = Field(description="Retrieve detailed information about the trays and records that store the information of the particular system", default=False)
+    # retrieve_sec_3: bool = Field(description="Retrieve information about the transactions linked to the trays of the system", default=False)
 
 
-def create_manual_tool(description, manual_pkl):
-    def decorator(func):
-        func.__doc__ = description
-        return tool("retrieve_information_from_" + remover_tildes(manual_pkl.title.replace(" ", "_").lower()), args_schema=retriever_input)(func)
 
-    @decorator
-    def retrieve_information(question:str, keywords:List[str] = []):
+@tool("retrieve_sistem_migration_information",args_schema=system_retriever_input)
+def retrieve_sistem_migration_information(system:str, retrieve_sec_1: bool = False, retrieve_sec_2: bool = False, retrieve_sec_3: bool = False):
+    """Retrieves content relevant to the migration of a particular sistems. The content consists of an outline of the migration of the system (trays and programs of the system, transactions, previous requieremnts, possible errors, among other things)"""
+    total_token = 0
+    content = ""
+    print(remover_tildes(system.lower()))
+    for m in manuales:
+        print(m.title.lower())
+        if m.title.lower() == "manual " + remover_tildes(system.lower()):
+            manual = m
+            break
+    
+    retrieved_secs_filt = ["1", "3"]
+    # if retrieve_sec_1:
+    #     retrieved_secs_filt.append("1")
+    # if retrieve_sec_2:
+    #     retrieved_secs_filt.append("2")
+    # if retrieve_sec_3:
+    #     retrieved_secs_filt.append("3")
 
-
-        # Pure Vector Search
-        embedding = embeddings.embed_query(question)
-        vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=4, fields="content_vector", exhaustive=True)
-
-        results = sc.search(  
-            # search_text=query,  
-            vector_queries= [vector_query],
-            filter=f"manual eq '{manual_pkl.title}'",
-            select=["seccion", "tokens"],
-        )
-        retrieved_secs = []
-        for r in results:
-            retrieved_secs.append(r["seccion"])
-        total_token = 0
-        sec_kw = []
-        for c in manual_pkl.contents.values():
-            kw = "BNJ040"
-            if kw.lower().strip() in c.lower().strip():
-                sec_kw.append(manual_pkl.get_key(c, manual_pkl.contents))
-        tot_sec = retrieved_secs + sec_kw
-        print(retrieved_secs, sec_kw)
-        retrieved_secs_filt = [x for x in tot_sec if not any([x.startswith(y) for y in tot_sec if y!=x])]
-
-        content = ""
-        for s in retrieved_secs_filt:
-            new_sect = manual_pkl.get_section(s)
-            token = len(encoding.encode(new_sect))
-            if token + total_token < 12000:
-                content += new_sect + "\n\n"
-                total_token += token
-            else:
-                print("Section {s} was not included in the answer because it exceeded the token limit")
-        return content
-    return retrieve_information
-# Example of creating a tool for a specific manual
-
-manual_tools = []
-for manual in manuales:
-    manual_name = manual.title
-    description = f'Retrieves relevant information from the manual using semantic search. The manual has information related to: {manual.description}'
-    manual_tools.append(create_manual_tool(description, manual))
-    # manual_tools.append(create_manual_tool(description, manual,manual_search_args))
+    for s in retrieved_secs_filt:
+        new_sect = manual.get_section(s)
+        token = len(encoding.encode(new_sect))
+        print(token)
+        if token + total_token < 11000:
+            content += new_sect + "\n\n"
+            total_token += token
+        else:
+            print("Section {s} was not included in the answer because it exceeded the token limit")
+    return content
 
 
-tools = [retrieve_fields_from_description] + manual_tools
+# GENERAL INFORMATION TOOL
+class general_retriever_input(BaseModel):
+    retrieve_sec_1: bool = Field(description="Retrieve a breif introduction of the concepts related to the mirgation process", default=False)
+    retrieve_sec_2: bool = Field(description="Retrieve an overview of the migration process execution. ", default=False)
+    retrieve_sec_3: bool = Field(description="Retrieve a detailed guide on how to put into practice the execution of the migration to Bantotal.", default=False)
+    retrieve_sec_4: bool = Field(description="Retrieve detailed information of the parameters that customize the migration process.", default=False)
+
+
+
+@tool("retrieve_migration_process_information",args_schema=general_retriever_input)
+def retrieve_migration_process_information(retrieve_sec_1: bool = False, retrieve_sec_2: bool = False, retrieve_sec_3: bool = False, retrieve_sec_4: bool = False):
+    """Retrieves information relevant to the migration process. The informations is grouped in four setions.  """
+    total_token = 0
+    content = ""
+
+    
+    retrieved_secs_filt = []
+    if retrieve_sec_1:
+        retrieved_secs_filt.append("1")
+    if retrieve_sec_2:
+        retrieved_secs_filt.append("3")
+    if retrieve_sec_3:
+        retrieved_secs_filt.append("2")
+    if retrieve_sec_4:
+        retrieved_secs_filt.append("4")
+
+    for s in retrieved_secs_filt:
+        new_sect = manual_general.get_section(s)
+        token = len(encoding.encode(new_sect))
+        print(token)
+        if token + total_token < 11000:
+            content += new_sect + "\n\n"
+            total_token += token
+        else:
+            print("Section {s} was not included in the answer because it exceeded the token limit")
+    return content
+
+
+
+class tray_retriever_input(BaseModel):
+    tray: str = Field(description="Tray that wants to be retrieved information from.")
+    system: str = Field(description="System the tray belongs to. The possible systems are: ['Cuentas Vistas', 'Cuentas y Personas', 'Chequeras', 'Depósitos', 'Microfinanzas', 'Saldos Iniciales', 'Facultades', 'Líneas de Crédito','Garantías', 'Préstamos', 'Acuerdos de Sobregiro', 'Tarjetas de Débito', 'Descuentos']", default="all")
+
+
+
+@tool("retrieve_tray",args_schema=tray_retriever_input)
+def retrieve_tray(tray:str, system:str="all"):
+    """Retrieves the records that are stored in a particular tray, and a brief description of the content of those records."""
+    total_token = 0
+    content = ""
+    tray = tray.upper()
+    system = "Manual " + remover_tildes(system)
+    if system != "all":
+        try:
+            content += f"Bandeja: {tray}\n Descripcion:{str(bandejas[system][tray]['descripcion'])} \n Registros: {str(bandejas[system][tray]['registros'])}\n"
+        except:
+            content += "No se encontraron registros para la bandeja solicitada"
+    else:
+        for s in bandejas:
+            try:
+                content += f"Bandeja: {tray}\n Descripcion:{str(bandejas[s][tray]['descripcion'])} \n Registros: {str(bandejas[s][tray]['registros'])}\n"
+            except:
+                continue
+    return content
+
+
+
+
+
+
+tools = [retrieve_migration_process_information, retrieve_sistem_migration_information, retrieve_tray, retrieve_records_from_description]
 
 
 
@@ -215,17 +277,37 @@ chat_template = ChatPromptTemplate.from_messages(
 
 You are a helpful assistant, expert on the migration process to the software Bantotal. You must answer users question IN SPANISH. 
 
-Instructions: 
+Here is a brief description of the elements of the migration process to Bantotal:
+
+Control and Dump Programs:
+There are two clearly differentiated types of programs in the System:
+    Control Programs: These verify that the data to be recorded in the tables are suitable. They indicate each record with a status code (whether it is valid or not).
+    Dump Programs: These take the information controlled by the Control Programs and record it in the Bantotal.
+
+Trays:
+The Control and Dump programs act on specific records, which are identified as belonging to a Tray. In other words, a Tray identifies a set of records, which may belong to one or more bantotal tables and be "views" of these.
+Trays are created specifically for each client according to their needs. It is understood that a Tray gathers a set of operations of the same type of product (e.g., Savings Accounts).
+
+Systems:
+The mentioned trays are grouped into specific themes, called Systems.
+         
+Transaction:
+In many Migrations, the result of the Dump program consists of generating data in various tables and generating an accounting entry. An accounting entry is associated with a transaction, which defines its behavior.
+Each Tray is associated with a transaction, and with this, the corresponding accounting entry is generated.
+         
+
+You must follow this instructions to answer the user questions: 
 
 1) All information in your answers MUST BE RETRIEVED from the use of the tools. DO NOT MAKE INFORMATION UP. 
 
-2) In case the question can´t be answered  using the tools provided (It is not relevant to the migration process) honestly say that you can not answer that question.
+2) The user must be transparent to the tools you are using to retrieve the information. If a tool needs to be used, use it without consulting the user. 
 
-3) The user must be transparent to the tools you are using to retrieve the information. If a tool needs to be used, use it without consulting the user. 
+3) Be detailed but in your answers but stay focused to the question and do NOT be redundant. Add all details that are useful to provide a complete answer, but do not add details beyond the scope of the question or are not present in the retrierved text.
 
-4) Be detailed in your answers but stay focused to the question. Add all details that are useful to provide a complete answer, but do not add details beyond the scope of the question.
+4) All tools can be used as many times as needed. If you are not able to provide a complete answer with the output of one tool, keep using tools until you can provide a complete answer.
 
-5) All tools can be used as many times as needed. If you are not able to provide a complete answer with the output of one tool, try using the same tool with different parameters or a new tool.
+5) If for any reason the question can´t be answered, or is irrelevant to the topic, honestly say that you can not answer that question. UNDER NO CIRCUNSTANCE MAKE INFORMATION UP
+
 """),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}"),
