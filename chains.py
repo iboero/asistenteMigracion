@@ -192,8 +192,8 @@ def retrieve_sistem_migration_information(system:str, retrieve_sec_1: bool = Fal
 # GENERAL INFORMATION TOOL
 class general_retriever_input(BaseModel):
     retrieve_sec_1: bool = Field(description="Retrieve a breif introduction of the concepts related to the mirgation process", default=False)
-    retrieve_sec_2: bool = Field(description="Retrieve an overview of how the migration process works. ", default=False)
-    retrieve_sec_3: bool = Field(description="Retrieve a detailed guide on how to use the Bantotal GUI to put into practice the migration process.", default=False)
+    retrieve_sec_2: bool = Field(description="Retrieve a brief overview of how the migration process works. ", default=False)
+    retrieve_sec_3: bool = Field(description="Retrieve a detailed guide on how to use the Bantotal GUI to put into practice the migration process. Has information on how tocreate a tray, execute control and dump programs, sql parametrization and parallelization, among other things", default=False)
     retrieve_sec_4: bool = Field(description="Retrieve detailed information of the parameters that customize the migration process.", default=False)
 
 
@@ -277,24 +277,25 @@ chat_template = ChatPromptTemplate.from_messages(
 
 You are a helpful assistant, expert on the migration process to the software Bantotal. You must answer users question IN SPANISH. 
 
-Here is a brief description of the elements of the migration process to Bantotal:
+Here is a brief description of the elements of the migration process to Bantotal in Spanish:
 
-Control and Dump Programs:
-There are two clearly differentiated types of programs in the System:
-    Control Programs: These verify that the data to be recorded in the tables are suitable. They indicate each record with a status code (whether it is valid or not).
-    Dump Programs: These take the information controlled by the Control Programs and record it in the Bantotal.
+"
+Programas de Control y Vuelco:
+Existen dos tipos claramente diferenciados de programas en el Sistema:
+    Programas de Control: Estos verifican que los datos a ser registrados en las tablas sean adecuados. Indican cada registro con un código de estado (si es válido o no).
+    Programas de Vuelco: Estos toman la información controlada por los Programas de Control y la registran en Bantotal.
 
-Trays:
-The Control and Dump programs act on specific records, which are identified as belonging to a Tray. In other words, a Tray identifies a set of records, which may belong to one or more bantotal tables and be "views" of these.
-Trays are created specifically for each client according to their needs. It is understood that a Tray gathers a set of operations of the same type of product (e.g., Savings Accounts).
+Bandejas:
+Los programas de Control y Vuelco actúan sobre registros específicos, que se identifican como pertenecientes a una Bandeja. En otras palabras, una Bandeja identifica un conjunto de registros, que pueden pertenecer a una o más tablas de bantotal y ser "vistas" de estas.
+Las Bandejas se crean específicamente para cada cliente según sus necesidades. Se entiende que una Bandeja reúne un conjunto de operaciones del mismo tipo de producto (por ejemplo, Cuentas de Ahorro).
 
-Systems:
-The mentioned trays are grouped into specific themes, called Systems.
-         
-Transaction:
-In many Migrations, the result of the Dump program consists of generating data in various tables and generating an accounting entry. An accounting entry is associated with a transaction, which defines its behavior.
-Each Tray is associated with a transaction, and with this, the corresponding accounting entry is generated.
-         
+Sistemas:
+Las bandejas mencionadas se agrupan en temas específicos, llamados Sistemas.
+
+Transacción:
+En muchas Migraciones, el resultado del programa de Vuelco consiste en generar datos en diversas tablas y generar una entrada contable. Una entrada contable está asociada con una transacción, que define su comportamiento.
+Cada Bandeja está asociada con una transacción, y con esto, se genera la entrada contable correspondiente.
+"
 
 You must follow this instructions to answer the user questions: 
 
