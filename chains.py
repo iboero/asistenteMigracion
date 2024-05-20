@@ -192,8 +192,8 @@ def retrieve_sistem_migration_information(system:str, retrieve_sec_1: bool = Fal
 # GENERAL INFORMATION TOOL
 class general_retriever_input(BaseModel):
     retrieve_sec_1: bool = Field(description="Retrieve a breif introduction of the concepts related to the mirgation process", default=False)
-    retrieve_sec_2: bool = Field(description="Retrieve an overview of the migration process execution. ", default=False)
-    retrieve_sec_3: bool = Field(description="Retrieve a detailed guide on how to put into practice the execution of the migration to Bantotal.", default=False)
+    retrieve_sec_2: bool = Field(description="Retrieve an overview of how the migration process works. ", default=False)
+    retrieve_sec_3: bool = Field(description="Retrieve a detailed guide on how to use the Bantotal GUI to put into practice the migration process.", default=False)
     retrieve_sec_4: bool = Field(description="Retrieve detailed information of the parameters that customize the migration process.", default=False)
 
 
@@ -229,14 +229,14 @@ def retrieve_migration_process_information(retrieve_sec_1: bool = False, retriev
 
 
 class tray_retriever_input(BaseModel):
-    tray: str = Field(description="Tray that wants to be retrieved information from.")
+    tray: str = Field(description="Tray that wants to be retrieved the fields from.")
     system: str = Field(description="System the tray belongs to. The possible systems are: ['Cuentas Vistas', 'Cuentas y Personas', 'Chequeras', 'Depósitos', 'Microfinanzas', 'Saldos Iniciales', 'Facultades', 'Líneas de Crédito','Garantías', 'Préstamos', 'Acuerdos de Sobregiro', 'Tarjetas de Débito', 'Descuentos']", default="all")
 
 
 
-@tool("retrieve_tray",args_schema=tray_retriever_input)
-def retrieve_tray(tray:str, system:str="all"):
-    """Retrieves the records that are stored in a particular tray, and a brief description of the content of those records."""
+@tool("retrieve_fields_from_tray",args_schema=tray_retriever_input)
+def retrieve_fields_from_tray(tray:str, system:str="all"):
+    """Retrieves the fields from a tray with a brief description of them."""
     total_token = 0
     content = ""
     tray = tray.upper()
@@ -259,7 +259,7 @@ def retrieve_tray(tray:str, system:str="all"):
 
 
 
-tools = [retrieve_migration_process_information, retrieve_sistem_migration_information, retrieve_tray, retrieve_records_from_description]
+tools = [retrieve_migration_process_information, retrieve_sistem_migration_information, retrieve_fields_from_tray, retrieve_records_from_description]
 
 
 
@@ -302,7 +302,7 @@ You must follow this instructions to answer the user questions:
 
 2) The user must be transparent to the tools you are using to retrieve the information. If a tool needs to be used, use it without consulting the user. 
 
-3) Be detailed but in your answers but stay focused to the question and do NOT be redundant. Add all details that are useful to provide a complete answer, but do not add details beyond the scope of the question or are not present in the retrierved text.
+3) Be detailed in your answers but do NOT be redundant. Add all details that are useful to provide a complete answer, but do not add details beyond the scope of the question or are not present in the retrierved text.
 
 4) All tools can be used as many times as needed. If you are not able to provide a complete answer with the output of one tool, keep using tools until you can provide a complete answer.
 
