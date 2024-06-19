@@ -27,6 +27,7 @@ from chains import agent_executor
 import asyncio
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Static HTML file handling using Jinja2
 templates = Jinja2Templates(directory="templates")
